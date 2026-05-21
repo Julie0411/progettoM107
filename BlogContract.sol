@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.30;
-
-/// @title BlogContract - Smart Contract per un Blog su Ethereum
-/// @author Elia Salmina - AMETI M107
+pragma solidity ^0.8.35;
 
 contract BlogContract {
-
-    // ─────────────────────────────────────────
-    //  STRUTTURE DATI
-    // ─────────────────────────────────────────
 
     struct Account {
         address owner;
@@ -36,10 +29,6 @@ contract BlogContract {
         uint    createdAt;
     }
 
-    // ─────────────────────────────────────────
-    //  VARIABILI DI STATO
-    // ─────────────────────────────────────────
-
     // address  →  Account
     mapping(address => Account) private accounts;
 
@@ -56,10 +45,6 @@ contract BlogContract {
     mapping(uint => mapping(address => bool)) private hasLiked;
 
     uint private postCount;
-
-    // ─────────────────────────────────────────
-    //  EVENTI
-    // ─────────────────────────────────────────
 
     event AccountCreated(address indexed owner, string username);
     event PostCreated(uint indexed postId, address indexed author, string title);
@@ -86,10 +71,6 @@ contract BlogContract {
         require(posts[_postId].author == msg.sender, "Non sei l'autore di questo post.");
         _;
     }
-
-    // ─────────────────────────────────────────
-    //  FUNZIONI - ACCOUNT
-    // ─────────────────────────────────────────
 
     /// Crea un nuovo account per msg.sender
     function createAccount(string memory _username, string memory _bio) external {
@@ -122,10 +103,6 @@ contract BlogContract {
     function getPostsByAccount(address _owner) external view returns (uint[] memory) {
         return postsByAccount[_owner];
     }
-
-    // ─────────────────────────────────────────
-    //  FUNZIONI - POST
-    // ─────────────────────────────────────────
 
     /// Crea un nuovo post
     function createPost(string memory _title, string memory _content)
@@ -206,7 +183,7 @@ contract BlogContract {
 
     /// Restituisce tutti i postId esistenti
     function getAllPosts() external view returns (uint[] memory) {
-        // Conta quanti post esistono ancora (non cancellati)
+        // Conta quanti post esistono ancora
         uint count = 0;
         for (uint i = 1; i <= postCount; i++) {
             if (posts[i].exists) count++;
@@ -222,10 +199,6 @@ contract BlogContract {
         }
         return result;
     }
-
-    // ─────────────────────────────────────────
-    //  FUNZIONI - COMMENTI
-    // ─────────────────────────────────────────
 
     /// Aggiunge un commento a un post
     function addComment(uint _postId, string memory _text)
