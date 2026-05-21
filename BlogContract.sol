@@ -5,28 +5,28 @@ contract BlogContract {
 
     struct Account {
         address owner;
-        string  username;
-        string  bio;
-        uint    createdAt;
-        bool    exists;
+        string username;
+        string bio;
+        uint createdAt;
+        bool exists;
     }
 
     struct Post {
-        uint    postId;
+        uint postId;
         address author;
-        string  title;
-        string  content;
-        uint    likes;
-        uint    createdAt;
-        bool    exists;
+        string title;
+        string content;
+        uint likes;
+        uint createdAt;
+        bool exists;
     }
 
     struct Comment {
-        uint    commentId;
+        uint commentId;
         address author;
-        string  text;
-        uint    postId;
-        uint    createdAt;
+        string text;
+        uint postId;
+        uint createdAt;
     }
 
     // address  →  Account
@@ -35,7 +35,7 @@ contract BlogContract {
     // postId   →  Post
     mapping(uint => Post) private posts;
 
-    // postId   →  lista di Comment
+    // postId   →  lista dei commenti
     mapping(uint => Comment[]) private comments;
 
     // address  →  lista di postId
@@ -52,10 +52,6 @@ contract BlogContract {
     event PostDeleted(uint indexed postId);
     event PostLiked(uint indexed postId, address indexed liker);
     event CommentAdded(uint indexed postId, address indexed author);
-
-    // ─────────────────────────────────────────
-    //  MODIFICATORI
-    // ─────────────────────────────────────────
 
     modifier onlyExistingAccount() {
         require(accounts[msg.sender].exists, "Devi prima creare un account.");
@@ -78,22 +74,18 @@ contract BlogContract {
         require(bytes(_username).length > 0, "Username non puo' essere vuoto.");
 
         accounts[msg.sender] = Account({
-            owner:     msg.sender,
-            username:  _username,
-            bio:       _bio,
+            owner: msg.sender,
+            username: _username,
+            bio: _bio,
             createdAt: block.timestamp,
-            exists:    true
+            exists: true
         });
 
         emit AccountCreated(msg.sender, _username);
     }
 
     /// Restituisce i dati di un account dato il suo indirizzo
-    function getAccount(address _owner)
-        external
-        view
-        returns (string memory username, string memory bio, uint createdAt)
-    {
+    function getAccount(address _owner) external view returns (string memory username, string memory bio, uint createdAt) {
         require(accounts[_owner].exists, "Account non trovato.");
         Account memory acc = accounts[_owner];
         return (acc.username, acc.bio, acc.createdAt);
@@ -105,10 +97,7 @@ contract BlogContract {
     }
 
     /// Crea un nuovo post
-    function createPost(string memory _title, string memory _content)
-        external
-        onlyExistingAccount
-    {
+    function createPost(string memory _title, string memory _content) external onlyExistingAccount {
         require(bytes(_title).length > 0,   "Il titolo non puo' essere vuoto.");
         require(bytes(_content).length > 0, "Il contenuto non puo' essere vuoto.");
 
@@ -116,13 +105,13 @@ contract BlogContract {
         uint newId = postCount;
 
         posts[newId] = Post({
-            postId:    newId,
-            author:    msg.sender,
-            title:     _title,
-            content:   _content,
-            likes:     0,
+            postId: newId,
+            author: msg.sender,
+            title: _title,
+            content: _content,
+            likes: 0,
             createdAt: block.timestamp,
-            exists:    true
+            exists: true
         });
 
         postsByAccount[msg.sender].push(newId);
@@ -131,32 +120,20 @@ contract BlogContract {
     }
 
     /// Modifica il contenuto di un post (solo l'autore)
-    function editPost(uint _postId, string memory _newContent)
-        external
-        onlyExistingPost(_postId)
-        onlyPostAuthor(_postId)
-    {
+    function editPost(uint _postId, string memory _newContent) external onlyExistingPost(_postId) onlyPostAuthor(_postId) {
         require(bytes(_newContent).length > 0, "Il contenuto non puo' essere vuoto.");
         posts[_postId].content = _newContent;
         emit PostEdited(_postId);
     }
 
     /// Elimina un post (solo l'autore)
-    function deletePost(uint _postId)
-        external
-        onlyExistingPost(_postId)
-        onlyPostAuthor(_postId)
-    {
+    function deletePost(uint _postId) external onlyExistingPost(_postId) onlyPostAuthor(_postId) {
         posts[_postId].exists = false;
         emit PostDeleted(_postId);
     }
 
     /// Mette like a un post (una volta sola per indirizzo)
-    function likePost(uint _postId)
-        external
-        onlyExistingAccount
-        onlyExistingPost(_postId)
-    {
+    function likePost(uint _postId) external onlyExistingAccount onlyExistingPost(_postId) {
         require(!hasLiked[_postId][msg.sender], "Hai gia' messo like a questo post.");
         hasLiked[_postId][msg.sender] = true;
         posts[_postId].likes++;
@@ -164,26 +141,21 @@ contract BlogContract {
     }
 
     /// Restituisce i dettagli di un post
-    function getPostDetails(uint _postId)
-        external
-        view
-        onlyExistingPost(_postId)
+    function getPostDetails(uint _postId) external view onlyExistingPost(_postId)
         returns (
-            uint    postId,
+            uint postId,
             address author,
-            string  memory title,
-            string  memory content,
-            uint    likes,
-            uint    createdAt
-        )
-    {
+            string memory title,
+            string memory content,
+            uint likes,
+            uint createdAt
+        ) {
         Post memory p = posts[_postId];
         return (p.postId, p.author, p.title, p.content, p.likes, p.createdAt);
     }
 
     /// Restituisce tutti i postId esistenti
     function getAllPosts() external view returns (uint[] memory) {
-        // Conta quanti post esistono ancora
         uint count = 0;
         for (uint i = 1; i <= postCount; i++) {
             if (posts[i].exists) count++;
@@ -201,15 +173,9 @@ contract BlogContract {
     }
 
     /// Aggiunge un commento a un post
-    function addComment(uint _postId, string memory _text)
-        external
-        onlyExistingAccount
-        onlyExistingPost(_postId)
-    {
+    function addComment(uint _postId, string memory _text) external onlyExistingAccount onlyExistingPost(_postId) {
         require(bytes(_text).length > 0, "Il commento non puo' essere vuoto.");
-
         uint commentId = comments[_postId].length;
-
         comments[_postId].push(Comment({
             commentId: commentId,
             author:    msg.sender,
@@ -222,12 +188,7 @@ contract BlogContract {
     }
 
     /// Restituisce tutti i commenti di un post
-    function getComments(uint _postId)
-        external
-        view
-        onlyExistingPost(_postId)
-        returns (Comment[] memory)
-    {
+    function getComments(uint _postId) external view onlyExistingPost(_postId) returns (Comment[] memory) {
         return comments[_postId];
     }
 }
